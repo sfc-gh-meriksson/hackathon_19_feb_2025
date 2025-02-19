@@ -23,7 +23,7 @@ DESC TABLE REVENUE_TIMESERIES_PROPERNAMES.REVENUE_TIMESERIES_PROPER_NAMES.DAILY_
 -- We need a stage for our yaml file. A stage is a storage area,
 CREATE STAGE yaml_data DIRECTORY = (ENABLE = TRUE);
 
--- Download the file revenue_scania_analyst.yaml from Google Drive
+-- Download the file revenue_scania_analyst.yaml from github or Google Drive
 -- Upload the file to the yaml_data stage by 
 -- 1. navigating to the Databases in the left hand menue, 
 -- 2. find the CORTEX_ANALYST databse and the PUBLIC schema
