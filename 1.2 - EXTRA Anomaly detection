@@ -1,0 +1,5 @@
+/*
+Another Timeseries based ML function is Anomaly Detection. This can be initiated in code or using the Wizzard in the AI/ML Studio.
+
+Try out Anomaly Detection on the timeseries data in the table HOL_TIMESERIES.ANALYTICS.TS_TAG_REFERENCE by walking through the wizzard from AI/ML Studio
+*/

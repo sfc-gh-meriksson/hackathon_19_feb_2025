@@ -1,0 +1,7 @@
+/*
+Lets try to get a chatbot going using Cortex Search as the bases for RAG. This is similar to what we did in 2.4 - Cortex search but includes a User Interface in Streamlit.
+
+Try using on or a few of the Scania reports stored on Google Drive for 2.4 - Cortex Analyst to make the chatbot relevant
+
+Here is the tutorial: https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-search/tutorials/cortex-search-tutorial-3-chat-advanced#introduction
+*/

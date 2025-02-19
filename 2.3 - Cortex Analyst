@@ -1,0 +1,43 @@
+/*
+Cortex Analyst is using a semantic model (in yaml format) to translate between strange technical colun names and business terms. It significantly simplifies the usage of business data in natural language situations.
+*/
+-- first lets create a new database
+CREATE DATABASE CORTEX_ANALYST;
+USE DATABASE CORTEX_ANALYST;
+
+-- Lets ccopy the shared data if we want to make changes to it
+CREATE OR REPLACE TABLE DAILY_REVENUE AS SELECT * FROM REVENUE_TIMESERIES_CRYPTICNAMES.REVENUE_TIMESERIES.DAILY_REVENUE;
+
+CREATE OR REPLACE TABLE DAILY_REVENUE_BY_PRODUCT AS SELECT * FROM 
+REVENUE_TIMESERIES_CRYPTICNAMES.REVENUE_TIMESERIES.DAILY_REVENUE_BY_PRODUCT;
+
+CREATE OR REPLACE TABLE DAILY_REVENUE_BY_REGION AS SELECT * FROM 
+REVENUE_TIMESERIES_CRYPTICNAMES.REVENUE_TIMESERIES.DAILY_REVENUE_BY_REGION;
+
+-- Compare the column names of the table DAILY_REVENUE_BY_REGION in the CORTEX_ANALYST database with the column names in of the same table in the REVENUE_TIMESERIES_PROPERNAMES database
+
+DESC TABLE DAILY_REVENUE_BY_REGION;
+DESC TABLE REVENUE_TIMESERIES_PROPERNAMES.REVENUE_TIMESERIES_PROPER_NAMES.DAILY_REVENUE_BY_REGION;
+
+
+-- We need a stage for our yaml file. A stage is a storage area,
+CREATE STAGE yaml_data DIRECTORY = (ENABLE = TRUE);
+
+-- Download the file revenue_scania_analyst.yaml from Google Drive
+-- Upload the file to the yaml_data stage by 
+-- 1. navigating to the Databases in the left hand menue, 
+-- 2. find the CORTEX_ANALYST databse and the PUBLIC schema
+-- 3. go to stages and click the yaml_data stage
+-- 4. click Upload file and choose the revenue_scania_analyst.yaml file you just downloaded
+
+/*
+Take a quick look at the yaml file. It contains translations between the Cryptic column names and busiess names including descriptions.
+
+Now its time to try out the semantic model within the yaml file. Navigate to Studio under AI/ML in the left hand menue and choose Cortex Analyst. Ensure that ACOUNTADMIN is chosen as role and the COMPUTE_WH as compuyte note. Choose to use a yaml file from a stage. Choose the CORTEX_ANALYST database  and the PUBLIC  schema, select the YAML_DATA stage and choose the revenue_scania_analyst.yaml file. Once you click open Snowflake wil automatically open the semantic model generator. 
+
+Now you can try the model by askig questions like:
+What are the average cogs?
+Give me the top selling product lines
+
+Remember that the column names in the table make no sense!!
+*/

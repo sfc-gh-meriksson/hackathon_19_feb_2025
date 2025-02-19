@@ -1,0 +1,7 @@
+/*
+The latest addition to the Snowflake GenAI feature set is the Agnets API. This uses Cortex Search and Cortex Analyst to create a Agentic AI solution that can draw conclutions from both structured and unstructured data.
+
+The Cortex Agents API is currently in Preview and is constantly being finetuned. The feature is currently only accessable via an API from outside of Snowflake (some workarounds can be used to overcome this). Therefore this tutorial uses standalone Streamlit instead of Streamlit in Snowflake. This requires more configuration from the developer. In the future this will most likely change to allow for usage of Streamlit in Snowflake.
+
+Follow this Quickstart: https://quickstarts.snowflake.com/guide/getting_started_with_cortex_agents/index.html?index=..%2F..index#0 
+*/

@@ -1,0 +1,9 @@
+/*
+Cortex Playground provides a powerfull way of comparing the output of different LLMs using the same prompt. The larger the model the more accurate the answer but also more costly per million tokens. 
+
+Check table 6(a) in this document for the pricing details: https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf
+
+Navigate to AI/ML - Studio in the left hand menue. Choose Cortex Playground. Click Compare (top right) and choose two different models. 
+
+Try different prompts, ask about Scania and ask the model to answer as different personas.
+ */

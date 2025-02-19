@@ -1,0 +1,117 @@
+USE ROLE ACCOUNTADMIN;
+USE WAREHOUSE COMPUTE_WH;
+-- Create demo database
+CREATE DATABASE IF NOT EXISTS cortex_search_db;
+
+
+ -- Create stage for incoming files. 
+ -- This has to be changed to an external stage, or move the files to internal stage
+ CREATE OR REPLACE STAGE cortex_search_db.public.fomc
+    DIRECTORY = (ENABLE = TRUE)
+    ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE');
+
+
+-- PARSE_DOCUMENT is not compatible with Network Policies. Using PyPDF2 text parser instead
+-- This function has to be updated to support the incoming file format, if it is .md or txt
+-- The chunking part, or some chunking mechanism, needs to be in place.
+CREATE OR REPLACE FUNCTION cortex_search_db.public.pdf_text_chunker(file_url STRING)
+    RETURNS TABLE (chunk VARCHAR)
+    LANGUAGE PYTHON
+    RUNTIME_VERSION = '3.9'
+    HANDLER = 'pdf_text_chunker'
+    PACKAGES = ('snowflake-snowpark-python', 'PyPDF2', 'langchain', 'PyCryptodome')
+    AS
+$$
+from snowflake.snowpark.types import StringType, StructField, StructType
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from snowflake.snowpark.files import SnowflakeFile
+import PyPDF2, io
+import logging
+import pandas as pd
+
+class pdf_text_chunker:
+
+    def read_pdf(self, file_url: str) -> str:
+        logger = logging.getLogger("udf_logger")
+        logger.info(f"Opening file {file_url}")
+
+        with SnowflakeFile.open(file_url, 'rb') as f:
+            buffer = io.BytesIO(f.readall())
+
+        reader = PyPDF2.PdfReader(buffer)
+        text = ""
+        for page in reader.pages:
+            try:
+                text += page.extract_text().replace('\n', ' ').replace('\0', ' ')
+            except:
+                text = "Unable to Extract"
+                logger.warn(f"Unable to extract from file {file_url}, page {page}")
+
+        return text
+
+    def process(self, file_url: str):
+        text = self.read_pdf(file_url)
+
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size = 2000,  # Adjust this as needed
+            chunk_overlap = 300,  # Overlap to keep chunks contextual
+            length_function = len
+        )
+
+        chunks = text_splitter.split_text(text)
+        df = pd.DataFrame(chunks, columns=['chunk'])
+
+        yield from df.itertuples(index=False, name=None)
+$$;
+
+
+/*
+Now we need to provide some material to the search service. Download the Annual and Sustainability reports for Scania for year 2023 and 2022. Navigate to the stage called fomc in the CORTEX_SEARCH_DB database and upload the files to that stage.
+*/
+
+-- Static table for the extracted data. 
+-- This table will have to be updated as new data arrives. This can be done using a STREAM on the stage together with a task
+-- or using a task batch updating the table.
+CREATE OR REPLACE TABLE cortex_search_db.public.docs_chunks_table AS
+    SELECT
+        relative_path,
+        build_scoped_file_url(@cortex_search_db.public.fomc, relative_path) AS file_url,
+        -- preserve file title information by concatenating relative_path with the chunk
+        CONCAT(relative_path, ': ', func.chunk) AS chunk,
+        'English' AS language
+    FROM
+        directory(@cortex_search_db.public.fomc),
+        TABLE(cortex_search_db.public.pdf_text_chunker(build_scoped_file_url(@cortex_search_db.public.fomc, relative_path))) AS func;
+
+
+-- Create search service. This can be done under AI/ML - Studio as well but the SQL syntax is simple
+CREATE OR REPLACE CORTEX SEARCH SERVICE cortex_search_db.public.fomc_meeting
+    ON chunk
+    ATTRIBUTES language
+    WAREHOUSE = cortex_search_tutorial_wh
+    TARGET_LAG = '1 hour'
+    AS (
+    SELECT
+        chunk,
+        relative_path,
+        file_url,
+        language
+    FROM cortex_search_db.public.docs_chunks_table
+    );
+
+-- Testing the search service 
+
+SELECT PARSE_JSON(
+  SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
+      'cortex_search_db.public.Scania_cortex_search',
+      '{
+        "query": "how big is scanias revenue",
+        "columns":[
+            "chunk",
+            "relative_path"
+        ]
+      }'
+  )
+)['results'] as results;
+
+-- Cortex Search is a search service. The SEARCH_PREVIEW function (and the use of the API) only provides the chunks of text that contains the result. To build a proper user experience this must be used together with the COMPLETE functionality to provide chatbot functionality. Please see 2.5 - EXTRA: RAG chatbot for the details

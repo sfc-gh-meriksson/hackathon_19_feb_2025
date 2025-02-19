@@ -1,0 +1,43 @@
+/*
+1.2 - COMPLETE
+
+Experiment with the COMPLETE functionality and different Large Language models. Your trial account will not have cross region inference enabled limiting you to only models available in your region. Askt different models about different topis and be creative witt the prompts.
+*/
+-- Create database to work in
+USE ROLE ACCOUNTADMIN;
+CREATE DATABASE SCANIA_HACKATHON;
+USE DATABASE SCANIA_HACKATHON;
+
+
+/* Use different models and prompts. 
+Syntax: COMPLETE(<model>,<prompt>);
+
+Available models here: https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex#syntax
+
+Try different models and different prompts. Ask the model to behave in a certain way
+*/
+SELECT SNOWFLAKE.CORTEX.COMPLETE('mistral-large2', 'Tell me about Scania Trucks');
+
+
+/*
+The COMPLETE functionality can be used for multiple rows in a table at the same time. TO show this first we need to create a table with the name of truck manufacturers.
+*/
+CREATE TABLE MANUFACTURERS (name varchar);
+
+INSERT INTO MANUFACTURERS
+VALUES 
+    ('Scania'), 
+    ('MAN'), 
+    ('International'), 
+    ('Volvo'), 
+    ('Mercedes-Benz'), 
+    ('Iveco'), 
+    ('Peterbilt');
+
+
+-- Execute COMPLETE on all rows at the same time.
+SELECT SNOWFLAKE.CORTEX.COMPLETE('mistral-large2', CONCAT('Tell me about the truck maufacturer ', name) )
+FROM MANUFACTURERS;
+
+-- NOTE: COMPLETE can not draw conclutions on the structure of the data in multiple rows. This is done by the AI SQL features discussed in the presentation
+
